@@ -1,1 +1,37 @@
+body {
+  background: #0f172a;
+  color: white;
+  font-family: Arial;
+  text-align: center;
+}
 
+.container {
+  max-width: 900px;
+  margin: auto;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.num {
+  padding: 20px;
+  background: #1e293b;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.taken {
+  background: #374151;
+}
+
+.log {
+  margin-top: 20px;
+  height: 150px;
+  overflow: auto;
+  background: black;
+  padding: 10px;
+}
