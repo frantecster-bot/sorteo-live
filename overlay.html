@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Overlay – Sorteo Live</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: transparent;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    width: 1920px;
+    height: 1080px;
+    overflow: hidden;
+    color: #fff;
+  }
+
+  /* ── Number grid (top-left corner for OBS) ── */
+  #overlay-grid {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    display: grid;
+    grid-template-columns: repeat(5, 52px);
+    gap: 5px;
+  }
+
+  .ov-num {
+    width: 52px;
+    height: 52px;
+    border-radius: 8px;
+    background: rgba(30, 41, 59, 0.85);
+    border: 2px solid rgba(51, 65, 85, 0.8);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: .75rem;
+    font-weight: 700;
+    backdrop-filter: blur(4px);
+  }
+
+  .ov-num.taken {
+    background: rgba(55, 65, 81, 0.9);
+    border-color: rgba(75, 85, 99, 0.8);
+    color: #9ca3af;
+    font-size: .6rem;
+  }
+
+  .ov-num.winner-ov {
+    background: rgba(22, 163, 74, 0.9);
+    border-color: #22c55e;
+    animation: pulse-ov 1s infinite;
+  }
+
+  @keyframes pulse-ov {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(34,197,94,.5); }
+    50%       { box-shadow: 0 0 0 8px rgba(34,197,94,0); }
+  }
+
+  /* ── Winner alert (bottom-right) ── */
+  #winner-alert {
+    position: absolute;
+    bottom: 40px;
+    right: 40px;
+    background: linear-gradient(135deg, rgba(22,163,74,.95), rgba(15,23,42,.95));
+    border: 3px solid #22c55e;
+    border-radius: 16px;
+    padding: 20px 28px;
+    min-width: 300px;
+    text-align: center;
+    backdrop-filter: blur(8px);
+    display: none;
+    animation: slide-in .5s cubic-bezier(.175,.885,.32,1.275);
+  }
+
+  @keyframes slide-in {
+    from { transform: translateX(120%); opacity: 0; }
+    to   { transform: translateX(0);    opacity: 1; }
+  }
+
+  #winner-alert .alert-label {
+    font-size: .75rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #a7f3d0;
+    margin-bottom: 6px;
+  }
+
+  #winner-alert .alert-name {
+    font-size: 1.5rem;
+    font-weight: 900;
+  }
+
+  #winner-alert .alert-num {
+    font-size: .9rem;
+    color: #a7f3d0;
+    margin-top: 4px;
+  }
+
+  /* ── Round badge (top-right) ── */
+  #round-ov {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(37, 99, 235, 0.85);
+    border-radius: 12px;
+    padding: 8px 18px;
+    font-size: .9rem;
+    font-weight: 700;
+    backdrop-filter: blur(4px);
+  }
+</style>
+</head>
+<body>
+
+<div id="overlay-grid"></div>
+<div id="round-ov">Ronda — / —</div>
+<div id="winner-alert">
+  <div class="alert-label">🏆 Ganador</div>
+  <div class="alert-name" id="ov-winner-name">—</div>
+  <div class="alert-num" id="ov-winner-num">Número —</div>
+</div>
+
+<script src="config.js"></script>
+<script>
+  let lastWinnerTs = 0;
+  let winnerTimer = null;
+
+  // Build grid
+  const grid = document.getElementById('overlay-grid');
+  for (let i = 1; i <= CONFIG.totalNumbers; i++) {
+    const div = document.createElement('div');
+    div.className = 'ov-num';
+    div.id = `ov-${i}`;
+    div.textContent = i;
+    grid.appendChild(div);
+  }
+
+  function poll() {
+    try {
+      // Update picks
+      const picksRaw = localStorage.getItem('sorteo_picks');
+      if (picksRaw) {
+        const picks = JSON.parse(picksRaw);
+        for (let i = 1; i <= CONFIG.totalNumbers; i++) {
+          const el = document.getElementById(`ov-${i}`);
+          if (!el) continue;
+          if (picks[i]) {
+            el.classList.add('taken');
+            el.textContent = '';
+            const numNode = document.createTextNode(i);
+            const br = document.createElement('br');
+            const nameSpan = document.createElement('span');
+            nameSpan.style.fontSize = '.5rem';
+            nameSpan.textContent = picks[i];
+            el.appendChild(numNode);
+            el.appendChild(br);
+            el.appendChild(nameSpan);
+          } else {
+            el.classList.remove('taken', 'winner-ov');
+            el.textContent = i;
+          }
+        }
+      }
+
+      // Update winner alert
+      const winnerRaw = localStorage.getItem('sorteo_winner');
+      if (winnerRaw) {
+        const w = JSON.parse(winnerRaw);
+        if (w.ts !== lastWinnerTs) {
+          lastWinnerTs = w.ts;
+          showWinner(w);
+        }
+        document.getElementById('round-ov').textContent = `Ronda ${w.round} / ${CONFIG.totalRounds}`;
+      }
+    } catch (_) {}
+  }
+
+  function showWinner(w) {
+    const alert = document.getElementById('winner-alert');
+    document.getElementById('ov-winner-name').textContent = w.name;
+    document.getElementById('ov-winner-num').textContent = `Número ${w.number}`;
+
+    const winEl = document.getElementById(`ov-${w.number}`);
+    if (winEl) winEl.classList.add('winner-ov');
+
+    // Reset animation
+    alert.style.display = 'none';
+    void alert.offsetWidth; // reflow
+    alert.style.display = 'block';
+
+    if (winnerTimer) clearTimeout(winnerTimer);
+    winnerTimer = setTimeout(() => { alert.style.display = 'none'; }, 10000);
+  }
+
+  setInterval(poll, 500);
+  poll();
+</script>
+</body>
+</html>

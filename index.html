@@ -2,25 +2,77 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Sorteo Live</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sorteo Live 🎯</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
+<!-- Winner flash overlay -->
+<div id="winner-overlay" class="winner-overlay hidden">
+  <div class="winner-box">
+    <div class="trophy">🏆</div>
+    <div id="winner-text"></div>
+    <button onclick="closeWinner()">Continuar</button>
+  </div>
+</div>
+
 <div class="container">
-  <h1>🎯 Ronda Express</h1>
+  <header>
+    <h1>🎯 Sorteo Live</h1>
+    <div class="round-badge" id="round-badge">Ronda 1 / <span id="total-rounds"></span></div>
+  </header>
 
-  <input id="name" placeholder="Tu nombre">
+  <!-- Tabs -->
+  <nav class="tabs">
+    <button class="tab active" data-tab="sorteo">🎲 Sorteo</button>
+    <button class="tab" data-tab="stats">🔥 Estadísticas</button>
+    <button class="tab" data-tab="ranking">🏅 Ranking</button>
+  </nav>
 
-  <div id="grid" class="grid"></div>
+  <!-- ============ TAB: SORTEO ============ -->
+  <section id="tab-sorteo" class="tab-content active">
+    <div class="player-row">
+      <input id="name" placeholder="Tu nombre" autocomplete="off">
+      <span id="vip-badge" class="vip-badge hidden">⭐ VIP</span>
+    </div>
 
-  <button onclick="startDraw()">INICIAR SORTEO</button>
+    <div id="grid" class="grid"></div>
 
-  <div id="log" class="log"></div>
+    <div class="controls">
+      <button id="btn-draw" class="btn-primary" onclick="startDraw()">🚀 INICIAR SORTEO</button>
+      <button class="btn-secondary" onclick="resetRound()">🔄 Nueva Ronda</button>
+      <button class="btn-danger" onclick="fullReset()">⛔ Reiniciar Todo</button>
+    </div>
+
+    <!-- Casino animation drum -->
+    <div id="drum" class="drum hidden">
+      <div id="drum-number">?</div>
+    </div>
+
+    <div id="log" class="log"></div>
+  </section>
+
+  <!-- ============ TAB: ESTADÍSTICAS ============ -->
+  <section id="tab-stats" class="tab-content">
+    <h2>Números más ganadores</h2>
+    <div id="stats-grid" class="stats-grid"></div>
+
+    <h2 style="margin-top:24px">Números fríos ❄️</h2>
+    <div id="cold-grid" class="stats-grid"></div>
+  </section>
+
+  <!-- ============ TAB: RANKING ============ -->
+  <section id="tab-ranking" class="tab-content">
+    <h2>🏆 Ranking de jugadores</h2>
+    <table id="ranking-table" class="ranking-table">
+      <thead><tr><th>#</th><th>Jugador</th><th>Puntos</th><th>Victorias</th><th>Estado</th></tr></thead>
+      <tbody id="ranking-body"></tbody>
+    </table>
+  </section>
 </div>
 
 <script src="config.js"></script>
 <script src="app.js"></script>
-
 </body>
 </html>
